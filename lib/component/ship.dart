@@ -5,44 +5,46 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/flame.dart';
 
-class Ship extends SpriteComponent with TapCallbacks {
-  late Vector2 tujuan; // Untuk menyimpan koordinat ketika kita mengklik/tap bagian dari layar, yang akan menjadi tujuan akhir dari ship
-  late Vector2 arah;
+class Ship extends SpriteComponent {
+  late Vector2 tujuan; // untuk menyimpan koordinat tujuan dari ship
+  late Vector2 arah; 
   double speed = 3.0;
 
-  @override
   Ship() {
-    arah = Vector2(0, 0); // Memberikan nilai awal arah, jika tidak diberi maka akan muncul error
-    tujuan = position;
+    arah = Vector2(0, 0);
+    tujuan = position; // Inisialisasi tujuan ke posisi awal
   }
 
-  void setTujuan(DragUpdateInfo info) {
-    tujuan = info.eventPosition.global; // Proses penyimpanan koordinat
-    lookAt(tujuan); // Pastikan metode ini sudah terdefinisi atau diimpor jika berasal dari pustaka
-    angle += pi;
-    arah = tujuan - position;
-    arah = arah.normalized(); // Membuat pergerakannya per satuan
+  @override 
+  FutureOr<void> onLoad() async {
+    sprite = Sprite(await Flame.images.load("ships/spaceShips_001.png"));
+    position = Vector2(100, 100);
+    angle = -pi / 2; // Mengatur sudut awal ke arah atas
+    anchor = Anchor.center; // Menetapkan anchor ke tengah
   }
 
- @override
-Future<void> onLoad() async {
-  // Memuat gambar sprite yang benar
-  sprite = Sprite(await Flame.images.load("ships/spaceShip_001.png"));
-  
-  // Mengatur posisi, sudut, dan titik jangkar
-  position = Vector2(100, 100);
-  angle = -pi / 2; // Mengatur sudut ke atas
-  anchor = Anchor.center; // Mengatur titik jangkar di tengah
-}
-
+  @override
+  void onMount() {
+    super.onMount();
+    // Tidak perlu menginisialisasi arah dan tujuan di sini karena sudah diatur di constructor
+  }
 
   @override
   void update(double dt) {
-    if ((tujuan - position).length < speed) { // Menggunakan 'length' yang benar
-      position = tujuan;
-      arah = Vector2(0, 0);
+    // Memperbarui posisi ship berdasarkan arah dan kecepatan
+    if ((tujuan - position).length > speed) {
+      position += arah * speed; // Memindahkan ship sesuai arah dan kecepatan
+    } else {
+      position = tujuan; // Jika sudah dekat dengan tujuan, langsung atur ke tujuan
+      arah = Vector2(0, 0); // Reset arah
     }
-    position.add(arah * speed);
     super.update(dt);
+  }
+
+  void setTujuan(DragUpdateInfo info) {
+    tujuan = info.eventPosition.global; // Menyimpan koordinat tujuan
+    lookAt(tujuan); // Mengubah arah ship ke tujuan
+    arah = tujuan - position; // Hitung arah ke tujuan
+    arah = arah.normalized(); // Normalisasi arah untuk kecepatan yang konsisten
   }
 }
